@@ -1,2 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
 :root{--navy:#081326;--navy2:#101f39;--gold:#e7bd72;--cream:#f4ead8;--muted:#a9b6c9;--blue:#3b91f4;--red:#f05d65;--green:#60d6a0}*{box-sizing:border-box}body{margin:0;font-family:Outfit,system-ui,sans-serif;background:var(--navy);color:#fff}a{color:inherit;text-decoration:none}.landing-wrap{max-width:1200px;margin:auto;padding:28px}.brand{display:flex;align-items:center;gap:18px}.brand img{width:76px;height:76px;object-fit:contain;background:#fff;border-radius:16px;padding:5px}.brand .college-mark{margin-left:auto;width:64px;height:64px;background:#081326}.brand span,.eyebrow{font-size:11px;letter-spacing:2px;color:var(--gold);font-weight:800}.brand h1{font-size:clamp(20px,3vw,34px);margin:3px 0}.brand p{margin:0;color:var(--muted);font-size:13px}.hero{display:grid;grid-template-columns:.85fr 1.15fr;gap:30px;align-items:center;padding:65px 0}.hero h2{font-size:clamp(44px,7vw,84px);line-height:.98;margin:18px 0}.hero h2 em{font-style:normal;color:var(--gold)}.hero-copy p{color:var(--muted);font-size:18px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.btn{padding:14px 20px;border-radius:12px;font-weight:800}.primary{background:var(--gold);color:#1a1b21}.secondary{border:1px solid #52627a}.hero-art{height:340px;border:1px solid #35435a;border-radius:28px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 20%,#29456a,#101e35 58%,#091426);box-shadow:0 30px 80px #0008;perspective:700px}.sun{position:absolute;width:180px;height:180px;border-radius:50%;background:#e9bd7550;filter:blur(5px);left:calc(50% - 90px);top:10px}.arena-label{position:absolute;top:35px;left:0;right:0;text-align:center;font-weight:900;letter-spacing:3px}.arena-label b{color:var(--gold);padding:0 12px}.rope{position:absolute;left:12%;right:12%;top:58%;height:9px;background:linear-gradient(#d6b17a,#815b37);border-radius:20px;transform:rotate(-2deg);box-shadow:0 7px 8px #0008;animation:sway 2.5s ease-in-out infinite alternate}.rope i{position:absolute;left:50%;top:-20px;width:5px;height:48px;background:var(--gold)}.pullers{position:absolute;top:43%;display:flex;gap:13px}.pullers span{display:grid;place-items:center;width:48px;height:75px;border-radius:24px 24px 13px 13px;font-size:28px;color:#fff;box-shadow:inset 0 -24px #0003;transform:skewY(-8deg)}.pullers.left{left:12%}.pullers.right{right:12%;transform:scaleX(-1)}.pullers.left span{background:linear-gradient(#83c5ff,#1763b8)}.pullers.right span{background:linear-gradient(#ff9b9e,#b82c44)}.ground{position:absolute;bottom:-60px;left:-10%;width:120%;height:140px;background:linear-gradient(170deg,#355d56,#142f31);transform:rotate(-4deg);border-radius:50%}.campus{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center;background:#111f35;padding:18px;border-radius:22px}.campus img{width:100%;height:250px;object-fit:cover;border-radius:14px}.campus h2{font-size:30px;margin:10px 0}.campus p,.campus small{color:var(--muted)}footer{text-align:center;color:#728198;padding:30px;font-size:12px}.panel{max-width:1100px;margin:30px auto;padding:24px}.panel-head{display:flex;align-items:center;gap:14px;margin-bottom:24px}.panel-head img{width:54px;height:54px;object-fit:contain;background:#fff;border-radius:12px;padding:4px}.panel-head h1{margin:0;font-size:25px}.panel-head p{margin:3px 0;color:var(--muted);font-size:13px}.card{background:var(--navy2);border:1px solid #2a3b55;border-radius:18px;padding:22px;margin:14px 0}.field{display:block;width:100%;background:#071225;border:1px solid #40516a;border-radius:10px;color:#fff;padding:14px;font:inherit;margin:8px 0 14px}.btn:disabled{opacity:.45}.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.team-card{padding:18px;border-radius:16px;background:#102e52;border:1px solid #2c5b8e}.team-card.red{background:#401d2b;border-color:#7c3444}.team-card h2{margin:0 0 10px}.arena-board{background:radial-gradient(circle at 50% 0,#29476b,#101f39 60%);border-radius:22px;padding:22px;border:1px solid #42536a}.scoreline{display:flex;justify-content:space-between;font-weight:900;font-size:24px}.scoreline .a{color:#73baff}.scoreline .b{color:#ff8b91}.track{height:24px;background:#070e1a;border-radius:30px;margin:28px 0;position:relative;border:1px solid #617087}.marker{position:absolute;top:-12px;width:48px;height:48px;border-radius:50%;background:var(--gold);border:5px solid #fff;left:calc(50% - 24px);transition:left .5s}.timer{text-align:center;font-size:42px;font-weight:900;color:var(--gold)}.room-code{font-size:34px;letter-spacing:7px;color:var(--gold);font-weight:900}.status{color:var(--muted);font-size:13px}.qr{width:150px;height:150px;background:white;padding:6px;border-radius:12px}.question{font-size:28px;font-weight:800;margin:18px 0}.answer-row{display:flex;gap:10px}.answer-row input{flex:1}.notice{padding:12px;border-radius:10px;background:#142a42;color:#c7d8ed}.hidden{display:none!important}@keyframes sway{from{transform:rotate(-3deg) translateY(-3px)}to{transform:rotate(2deg) translateY(3px)}}@media(max-width:760px){.landing-wrap{padding:18px}.brand img{width:54px;height:54px}.brand .college-mark{width:48px;height:48px}.hero{grid-template-columns:1fr;padding:42px 0}.hero-art{height:270px}.campus{grid-template-columns:1fr}.campus img{height:190px}.panel{padding:14px;margin:12px auto}.team-grid{grid-template-columns:1fr}.scoreline{font-size:18px}}
+
+/* ==================================
+   AZHARUL HIDAYA - 2D ARENA
+================================== */
+
+#three-arena {
+  width: 100%;
+  height: 480px;
+  min-height: 320px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  margin: 18px 0;
+  background: #d9efff;
+  border: 3px solid #e7bd72;
+  box-shadow: 0 12px 30px rgba(0,0,0,.25);
+}
+
+#three-arena canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.arena-board {
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  #three-arena {
+    height: 350px;
+    min-height: 300px;
+    border-radius: 14px;
+  }
+}

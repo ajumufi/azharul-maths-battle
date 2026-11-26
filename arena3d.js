@@ -1,648 +1,395 @@
 
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
-
 const mount = document.getElementById("three-arena");
 
 if (mount) {
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x101b2d);
-  scene.fog = new THREE.Fog(0x101b2d, 24, 60);
+  mount.innerHTML = "";
 
-  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-  camera.position.set(0, 7.5, 22);
-  camera.lookAt(0, 1.3, 0);
+  Object.assign(mount.style, {
+    position: "relative",
+    overflow: "hidden"
+  });
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  mount.appendChild(renderer.domElement);
+  const canvas = document.createElement("canvas");
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
+  canvas.style.display = "block";
+  mount.appendChild(canvas);
 
-  // LIGHTING
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x263044, 2.2));
+  const ctx = canvas.getContext("2d");
 
-  const mainLight = new THREE.DirectionalLight(0xffffff, 3);
-  mainLight.position.set(-5, 12, 9);
-  mainLight.castShadow = true;
-  mainLight.shadow.mapSize.set(2048, 2048);
-  scene.add(mainLight);
-
-  const blueGlow = new THREE.PointLight(0x168bff, 35, 12);
-  blueGlow.position.set(-5, 3, -2);
-  scene.add(blueGlow);
-
-  const redGlow = new THREE.PointLight(0xff263f, 35, 12);
-  redGlow.position.set(5, 3, -2);
-  scene.add(redGlow);
-
-  // MATERIALS
-  const mat = (color, roughness = 0.82, flatShading = false) =>
-    new THREE.MeshStandardMaterial({
-      color,
-      roughness,
-      flatShading
-    });
-
-  const skinColors = [
-    0xb87952, 0xc58b66, 0x9d6548,
-    0xd09a72, 0xa96e4f, 0xc08360
-  ];
-
-  const skinMats = skinColors.map(c => mat(c));
-  const white = mat(0xf4f0e6);
-  const capMat = mat(0xffffff);
-  const blue = mat(0x0878dc);
-  const red = mat(0xc92842);
-  const blueDark = mat(0x064b91);
-  const redDark = mat(0x821b30);
-  const pantsMat = mat(0x293448);
-  const shoeMat = mat(0x171b24);
-  const ropeMat = mat(0xb98245);
-  const goldMat = mat(0xffd28a);
-  const black = mat(0x241a17);
-  const eyeWhite = mat(0xffffff);
-  const eyeBlack = mat(0x171717);
-  const mouthMat = mat(0x713e35);
-
-  // FLOOR
-  const floor = new THREE.Mesh(
-    new THREE.CylinderGeometry(13, 14, 0.55, 64),
-    mat(0x263d3a)
-  );
-  floor.position.y = -0.4;
-  floor.receiveShadow = true;
-  scene.add(floor);
-
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(11, 0.12, 8, 100),
-    mat(0xd6ad69)
-  );
-  ring.rotation.x = Math.PI / 2;
-  ring.position.y = -0.1;
-  scene.add(ring);
-
-  const centerLine = new THREE.Mesh(
-    new THREE.BoxGeometry(0.06, 0.025, 8),
-    mat(0xffd98c)
-  );
-  centerLine.position.y = -0.1;
-  scene.add(centerLine);
-
-  // STADIUM LIGHTS
-  for (const x of [-8, 8]) {
-    const pole = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.12, 0.18, 7, 12),
-      mat(0x64748b)
-    );
-    pole.position.set(x, 3, -5);
-    scene.add(pole);
-
-    const lamp = new THREE.PointLight(0xffffff, 35, 15);
-    lamp.position.set(x, 6.5, -4);
-    scene.add(lamp);
-  }
-
-  // SHADOW HELPER
-  function addMesh(parent, geometry, material, position) {
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(...position);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    parent.add(mesh);
-    return mesh;
-  }
-
-  // TAPERED LIMB BETWEEN TWO POINTS
-  function limb(parent, start, end, radius, material, endRadius = radius) {
-    const a = new THREE.Vector3(...start);
-    const b = new THREE.Vector3(...end);
-    const direction = new THREE.Vector3().subVectors(b, a);
-    const length = direction.length();
-
-    const mesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        endRadius,
-        radius,
-        length,
-        12,
-        1
-      ),
-      material
-    );
-
-    mesh.position.copy(a).add(b).multiplyScalar(0.5);
-    mesh.quaternion.setFromUnitVectors(
-      new THREE.Vector3(0, 1, 0),
-      direction.normalize()
-    );
-
-    mesh.castShadow = true;
-    parent.add(mesh);
-    return mesh;
-  }
-
-  // CHARACTER LIST
-  const people = [];
-
-  // CHARACTER BODY SHAPE
-  function createTunic(parent, teamMaterial) {
-    const profile = [
-      new THREE.Vector2(0.31, 0.02),
-      new THREE.Vector2(0.40, 0.12),
-      new THREE.Vector2(0.43, 0.25),
-      new THREE.Vector2(0.37, 0.48),
-      new THREE.Vector2(0.34, 0.72),
-      new THREE.Vector2(0.29, 0.91),
-      new THREE.Vector2(0.22, 1.02),
-      new THREE.Vector2(0.17, 1.06),
-      new THREE.Vector2(0, 1.06)
-    ];
-
-    const geometry = new THREE.LatheGeometry(profile, 24);
-    const tunic = addMesh(parent, geometry, white, [0, 0, 0]);
-
-    // TEAM COLOUR WAIST BELT
-    const belt = addMesh(
-      parent,
-      new THREE.CylinderGeometry(0.37, 0.39, 0.13, 24),
-      teamMaterial,
-      [0, 0.30, 0]
-    );
-
-    // SHOULDER COLOUR DETAIL
-    const shoulder = addMesh(
-      parent,
-      new THREE.SphereGeometry(0.32, 16, 12),
-      teamMaterial,
-      [0, 0.86, 0]
-    );
-    shoulder.scale.set(1, 0.35, 1);
-
-    // FRONT WHITE PANEL HIDES MOST OF SHOULDER DETAIL
-    const panel = addMesh(
-      parent,
-      new THREE.BoxGeometry(0.06, 0.58, 0.34),
-      white,
-      [0.34, 0.55, 0]
-    );
-
-    // COLLAR
-    const collar = addMesh(
-      parent,
-      new THREE.TorusGeometry(0.17, 0.025, 8, 24),
-      teamMaterial,
-      [0, 1.02, 0]
-    );
-    collar.rotation.x = Math.PI / 2;
-
-    // BUTTONS
-    for (const y of [0.77, 0.65, 0.53]) {
-      addMesh(
-        parent,
-        new THREE.SphereGeometry(0.025, 8, 8),
-        goldMat,
-        [0.365, y, 0]
-      );
-    }
-
-    return tunic;
-  }
-
-  // HEAD
-  function createHead(parent, skin, variation) {
-    const headRig = new THREE.Group();
-    headRig.position.set(0, 1.04, 0);
-    parent.add(headRig);
-
-    const head = addMesh(
-      headRig,
-      new THREE.SphereGeometry(0.29, 24, 20),
-      skin,
-      [0, 0, 0]
-    );
-
-    head.scale.set(
-      variation.headWidth,
-      variation.headHeight,
-      0.88
-    );
-
-    // EARS
-    for (const side of [-1, 1]) {
-      const ear = addMesh(
-        headRig,
-        new THREE.SphereGeometry(0.075, 12, 10),
-        skin,
-        [-0.01, -0.01, side * 0.255]
-      );
-      ear.scale.set(0.7, 1, 0.65);
-    }
-
-    // HAIR AT BACK OF HEAD
-    const hair = addMesh(
-      headRig,
-      new THREE.SphereGeometry(0.27, 18, 14),
-      black,
-      [-0.07, 0.12, 0]
-    );
-    hair.scale.set(0.85, 0.72, 0.92);
-
-    // EYES
-    for (const side of [-1, 1]) {
-      addMesh(
-        headRig,
-        new THREE.SphereGeometry(0.065, 12, 10),
-        eyeWhite,
-        [0.225, 0.035, side * 0.105]
-      );
-
-      addMesh(
-        headRig,
-        new THREE.SphereGeometry(0.032, 10, 8),
-        eyeBlack,
-        [0.278, 0.035, side * 0.105]
-      );
-    }
-
-    // NOSE
-    const nose = addMesh(
-      headRig,
-      new THREE.SphereGeometry(0.055, 12, 10),
-      skin,
-      [0.29, -0.045, 0]
-    );
-    nose.scale.set(1.1, 0.8, 0.85);
-
-    // MOUTH
-    const mouth = addMesh(
-      headRig,
-      new THREE.SphereGeometry(0.045, 12, 8),
-      mouthMat,
-      [0.263, -0.13, 0]
-    );
-    mouth.scale.set(0.4, 0.22, 1);
-
-    // EYEBROWS
-    for (const side of [-1, 1]) {
-      const brow = addMesh(
-        headRig,
-        new THREE.BoxGeometry(0.035, 0.025, 0.09),
-        black,
-        [0.235, 0.12, side * 0.105]
-      );
-      brow.rotation.x = side * 0.08;
-    }
-
-    // WHITE KUFII CAP
-    const cap = addMesh(
-      headRig,
-      new THREE.CylinderGeometry(0.22, 0.25, 0.16, 24),
-      capMat,
-      [0, 0.265, 0]
-    );
-
-    const capTop = addMesh(
-      headRig,
-      new THREE.SphereGeometry(0.22, 20, 12),
-      capMat,
-      [0, 0.34, 0]
-    );
-    capTop.scale.y = 0.25;
-
-    // CAP EDGE
-    const capBand = addMesh(
-      headRig,
-      new THREE.TorusGeometry(0.235, 0.018, 8, 24),
-      mat(0xd9d9d9),
-      [0, 0.20, 0]
-    );
-    capBand.rotation.x = Math.PI / 2;
-
-    return headRig;
-  }
-
-  // ONE CHARACTER
-  function createPlayer(team, index) {
-    const isBlue = team === "A";
-    const direction = isBlue ? 1 : -1;
-    const group = new THREE.Group();
-
-    const teamMaterial = isBlue ? blue : red;
-    const darkTeam = isBlue ? blueDark : redDark;
-    const skin = skinMats[team === "A" ? index : index + 3];
-
-    // DIFFERENT BODY SHAPES
-    const variations = [
-      { height: 1.00, width: 1.00, headWidth: 0.90, headHeight: 1.05 },
-      { height: 1.10, width: 1.12, headWidth: 1.00, headHeight: 1.00 },
-      { height: 0.92, width: 0.91, headWidth: 0.88, headHeight: 1.12 }
-    ];
-
-    const variation = variations[index];
-
-    const baseX = isBlue
-      ? -3.0 - index * 0.95
-      : 3.0 + index * 0.95;
-
-    group.position.set(baseX, 0, (index - 1) * 1.25);
-    group.scale.x = direction;
-    group.scale.y = variation.height;
-    group.scale.z = variation.width;
-    scene.add(group);
-
-    // BODY RIG
-    const bodyRig = new THREE.Group();
-    bodyRig.position.set(0, 0.85, 0);
-    group.add(bodyRig);
-
-    // TUNIC
-    createTunic(bodyRig, teamMaterial);
-
-    // SLEEVE DETAILS
-    for (const side of [-1, 1]) {
-      const sleeve = addMesh(
-        bodyRig,
-        new THREE.SphereGeometry(0.19, 14, 12),
-        white,
-        [0.04, 0.82, side * 0.32]
-      );
-      sleeve.scale.set(0.8, 0.7, 1);
-    }
-
-    // HEAD
-    const headRig = createHead(bodyRig, skin, variation);
-
-    // LEGS
-    const legs = [];
-
-    for (const side of [-1, 1]) {
-      const legPivot = new THREE.Group();
-      legPivot.position.set(-0.02, 0.13, side * 0.19);
-      group.add(legPivot);
-
-      // THIGH
-      limb(
-        legPivot,
-        [0, 0.05, 0],
-        [-0.05, -0.28, 0],
-        0.14,
-        pantsMat,
-        0.115
-      );
-
-      // LOWER LEG
-      limb(
-        legPivot,
-        [-0.05, -0.28, 0],
-        [0.16, -0.55, 0],
-        0.105,
-        pantsMat,
-        0.075
-      );
-
-      // SHOE
-      const shoe = addMesh(
-        legPivot,
-        new THREE.SphereGeometry(0.16, 16, 12),
-        shoeMat,
-        [0.22, -0.58, 0]
-      );
-      shoe.scale.set(1.45, 0.48, 0.75);
-
-      // SHOE SOLE
-      addMesh(
-        legPivot,
-        new THREE.BoxGeometry(0.35, 0.045, 0.17),
-        black,
-        [0.22, -0.65, 0]
-      );
-
-      legs.push(legPivot);
-    }
-
-    // ARMS
-    const arms = [];
-
-    for (const side of [-1, 1]) {
-      const armPivot = new THREE.Group();
-      armPivot.position.set(0.02, 0.65, side * 0.32);
-      bodyRig.add(armPivot);
-
-      // UPPER ARM
-      limb(
-        armPivot,
-        [0, 0, 0],
-        [0.32, -0.13, side * 0.015],
-        0.115,
-        skin,
-        0.095
-      );
-
-      // ELBOW JOINT
-      addMesh(
-        armPivot,
-        new THREE.SphereGeometry(0.105, 12, 10),
-        skin,
-        [0.32, -0.13, side * 0.015]
-      );
-
-      // FOREARM
-      limb(
-        armPivot,
-        [0.32, -0.13, side * 0.015],
-        [0.70, -0.18, side * 0.035],
-        0.09,
-        skin,
-        0.075
-      );
-
-      // HAND
-      const hand = addMesh(
-        armPivot,
-        new THREE.SphereGeometry(0.105, 14, 12),
-        skin,
-        [0.76, -0.18, side * 0.035]
-      );
-      hand.scale.set(1.1, 0.85, 0.9);
-
-      // FINGERS
-      for (let finger = 0; finger < 3; finger++) {
-        const f = addMesh(
-          armPivot,
-          new THREE.SphereGeometry(0.025, 8, 8),
-          skin,
-          [
-            0.81,
-            -0.19 - finger * 0.035,
-            side * (0.035 + finger * 0.025)
-          ]
-        );
-        f.scale.set(1.5, 0.8, 0.8);
-      }
-
-      // TEAM COLOUR SLEEVE EDGE
-      const cuff = addMesh(
-        armPivot,
-        new THREE.SphereGeometry(0.105, 12, 10),
-        teamMaterial,
-        [0.12, -0.045, side * 0.008]
-      );
-      cuff.scale.set(1.0, 0.45, 0.9);
-
-      arms.push(armPivot);
-    }
-
-    // EXTRA TEAM BADGE
-    const badge = addMesh(
-      bodyRig,
-      new THREE.SphereGeometry(0.10, 12, 10),
-      darkTeam,
-      [0.37, 0.78, 0.17]
-    );
-    badge.scale.set(0.35, 1, 1);
-
-    people.push({
-      group,
-      bodyRig,
-      headRig,
-      legs,
-      arms,
-      team,
-      index,
-      baseX,
-      direction
-    });
-  }
-
-  // SIX BOYS
-  for (let i = 0; i < 3; i++) {
-    createPlayer("A", i);
-    createPlayer("B", i);
-  }
-
-  // ROPE
-  const ropeGroup = new THREE.Group();
-  scene.add(ropeGroup);
-
-  const rope = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.075, 0.075, 16, 20),
-    ropeMat
-  );
-  rope.rotation.z = Math.PI / 2;
-  rope.position.y = 1.35;
-  rope.castShadow = true;
-  ropeGroup.add(rope);
-
-  // ROPE KNOT
-  const knot = addMesh(
-    ropeGroup,
-    new THREE.SphereGeometry(0.2, 20, 16),
-    goldMat,
-    [0, 1.35, 0]
-  );
-
-  // CENTRE FLAG
-  const flagPole = addMesh(
-    ropeGroup,
-    new THREE.CylinderGeometry(0.025, 0.025, 0.8),
-    capMat,
-    [0, 1.75, 0]
-  );
-
-  const flag = addMesh(
-    ropeGroup,
-    new THREE.BoxGeometry(0.42, 0.25, 0.04),
-    mat(0xffd34f),
-    [0.21, 1.95, 0]
-  );
-
-  // GAME POSITION
+  let W = 0, H = 0, dpr = 1;
   let targetPosition = 50;
   let currentPosition = 50;
-  let pullEffect = 0;
+  let lastTime = 0;
+
+  const boys = [
+    { team: "A", index: 0, skin: "#a96e4f", height: 1.00, width: 1.00, cap: "#fff" },
+    { team: "A", index: 1, skin: "#c58b66", height: 1.08, width: 1.12, cap: "#fff" },
+    { team: "A", index: 2, skin: "#d09a72", height: 0.92, width: 0.92, cap: "#fff" },
+    { team: "B", index: 0, skin: "#b87952", height: 1.04, width: 1.05, cap: "#fff" },
+    { team: "B", index: 1, skin: "#9d6548", height: 0.94, width: 1.10, cap: "#fff" },
+    { team: "B", index: 2, skin: "#c08360", height: 1.10, width: 0.94, cap: "#fff" }
+  ];
+
+  function resize() {
+    const rect = mount.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    W = rect.width;
+    H = rect.height;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  new ResizeObserver(resize).observe(mount);
+  resize();
 
   window.addEventListener("tug-update", (event) => {
     targetPosition = Math.max(
       5,
       Math.min(95, Number(event.detail?.position ?? 50))
     );
-    pullEffect = 1;
   });
 
-  // RESIZE
-  function resize() {
-    const width = mount.clientWidth;
-    const height = mount.clientHeight;
-    if (!width || !height) return;
-
-    renderer.setSize(width, height);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
+  function roundedRect(x, y, w, h, r, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+    ctx.fill();
   }
 
-  new ResizeObserver(resize).observe(mount);
-  resize();
+  function line(x1, y1, x2, y2, color, width = 7) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
+  }
 
-  // ANIMATION
-  const clock = new THREE.Clock();
+  function drawBackground() {
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#d9efff");
+    sky.addColorStop(0.65, "#f3f5e9");
+    sky.addColorStop(1, "#c8d8b4");
 
-  function animate() {
-    requestAnimationFrame(animate);
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
 
-    const delta = Math.min(clock.getDelta(), 0.04);
-    const time = clock.elapsedTime;
+    // Background decorations
+    ctx.fillStyle = "#b6d5b0";
+    ctx.beginPath();
+    ctx.ellipse(W * 0.5, H * 0.75, W * 0.65, H * 0.22, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    currentPosition +=
-      (targetPosition - currentPosition) * delta * 2.5;
+    // Arena floor
+    roundedRect(W * 0.04, H * 0.69, W * 0.92, H * 0.24, 25, "#d9c59b");
 
-    const ropeMove = (currentPosition - 50) * 0.1;
-    ropeGroup.position.x = ropeMove;
+    // Ground stripes
+    ctx.strokeStyle = "rgba(115,85,48,.18)";
+    ctx.lineWidth = 2;
 
-    people.forEach((player) => {
-      const isWinning =
-        (player.team === "A" && targetPosition < 50) ||
-        (player.team === "B" && targetPosition > 50);
+    for (let i = 0; i < 8; i++) {
+      ctx.beginPath();
+      ctx.moveTo(W * 0.06, H * (0.72 + i * 0.025));
+      ctx.lineTo(W * 0.94, H * (0.72 + i * 0.025));
+      ctx.stroke();
+    }
 
-      const effort = isWinning ? 1 : 0.45;
-      const phase = time * 7 + player.index * 0.8;
+    // Center marking
+    ctx.setLineDash([9, 8]);
+    line(W * 0.5, H * 0.70, W * 0.5, H * 0.91, "#fff5d8", 3);
+    ctx.setLineDash([]);
 
-      // LEAN BACK
-      const lean = isWinning ? 0.30 : 0.13;
-      player.bodyRig.rotation.z =
-        lean + Math.sin(phase) * 0.035 * effort;
+    // Sun
+    ctx.fillStyle = "#ffd477";
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.12, Math.min(W, H) * 0.045, 0, Math.PI * 2);
+    ctx.fill();
 
-      // HEAD
-      player.headRig.rotation.z =
-        -0.06 + Math.sin(phase * 0.6) * 0.025;
+    // Clouds
+    drawCloud(W * 0.16, H * 0.17);
+    drawCloud(W * 0.82, H * 0.22);
 
-      // ARMS
-      player.arms.forEach((arm, i) => {
-        arm.rotation.z =
-          -0.06 + Math.sin(phase + i * 0.5) * 0.07 * effort;
-      });
+    // Team labels
+    drawTeamLabel(W * 0.20, H * 0.12, "TEAM A", "#0878dc");
+    drawTeamLabel(W * 0.80, H * 0.12, "TEAM B", "#c92842");
+  }
 
-      // LEGS
-      player.legs.forEach((leg, i) => {
-        leg.rotation.z =
-          (i === 0 ? -1 : 1) *
-          (0.08 + Math.sin(phase + i) * 0.035 * effort);
-      });
+  function drawCloud(x, y) {
+    ctx.fillStyle = "rgba(255,255,255,.75)";
+    ctx.beginPath();
+    ctx.arc(x, y, 17, 0, Math.PI * 2);
+    ctx.arc(x + 20, y - 8, 22, 0, Math.PI * 2);
+    ctx.arc(x + 42, y, 17, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-      // BODY EFFORT
-      player.group.position.x =
-        player.baseX +
-        (isWinning ? Math.sin(phase) * 0.025 : 0);
+  function drawTeamLabel(x, y, text, color) {
+    roundedRect(x - 48, y - 17, 96, 34, 12, color);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 15px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, x, y);
+  }
 
-      player.group.position.y =
-        Math.abs(Math.sin(phase * 0.5)) * 0.025;
+  function drawBoy(boy, x, groundY, scale, time, ropeY) {
+    const blue = boy.team === "A";
+    const team = blue ? "#0878dc" : "#c92842";
+    const dark = blue ? "#064b91" : "#821b30";
+    const dir = blue ? 1 : -1;
+
+    const winning = blue
+      ? targetPosition < 50
+      : targetPosition > 50;
+
+    const effort = winning ? 1 : 0.45;
+    const phase = time * 5 + boy.index * 0.8;
+    const movement = Math.sin(phase) * 2.2 * effort;
+
+    ctx.save();
+    ctx.translate(x, groundY + movement);
+    ctx.scale(dir * scale * boy.width, scale * boy.height);
+
+    // Ground shadow
+    ctx.fillStyle = "rgba(57,47,31,.18)";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 36, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Legs
+    line(-9, -39, -20, -12, "#293448", 11);
+    line(-20, -12, -30, -3, "#293448", 10);
+    line(9, -39, 19, -13, "#293448", 11);
+    line(19, -13, 29, -3, "#293448", 10);
+
+    // Shoes
+    roundedRect(-43, -7, 25, 10, 5, "#20232b");
+    roundedRect(17, -7, 26, 10, 5, "#20232b");
+
+    // Body / kurta
+    ctx.fillStyle = "#fffaf0";
+    ctx.strokeStyle = "#6d5c4b";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-18, -105);
+    ctx.quadraticCurveTo(0, -119, 19, -105);
+    ctx.lineTo(24, -40);
+    ctx.quadraticCurveTo(0, -32, -24, -40);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Team colour shoulder detail
+    ctx.fillStyle = team;
+    ctx.beginPath();
+    ctx.moveTo(-17, -103);
+    ctx.quadraticCurveTo(0, -119, 18, -104);
+    ctx.lineTo(15, -91);
+    ctx.lineTo(-13, -91);
+    ctx.closePath();
+    ctx.fill();
+
+    // Kurta buttons
+    for (let i = 0; i < 3; i++) {
+      ctx.fillStyle = "#c79b45";
+      ctx.beginPath();
+      ctx.arc(1, -91 + i * 10, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Collar
+    line(-5, -107, 0, -99, "#b99b6b", 2);
+    line(5, -107, 0, -99, "#b99b6b", 2);
+
+    // Arms reaching towards rope
+    const armY = ropeY - groundY;
+
+    line(-9, -99, 9, -82, boy.skin, 10);
+    line(9, -82, 31, armY + 5, boy.skin, 9);
+
+    line(12, -98, 28, -80, boy.skin, 10);
+    line(28, -80, 35, armY + 11, boy.skin, 9);
+
+    // Sleeves
+    line(-9, -99, 9, -82, team, 11);
+    line(12, -98, 28, -80, team, 11);
+
+    // Hands gripping rope
+    ctx.fillStyle = boy.skin;
+    ctx.beginPath();
+    ctx.arc(34, armY + 4, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Head
+    ctx.fillStyle = boy.skin;
+    ctx.strokeStyle = "#59402f";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(-13, -127, 18, 21, -0.12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Ears
+    ctx.beginPath();
+    ctx.arc(-30, -127, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Face details
+    ctx.fillStyle = "#251c19";
+    ctx.beginPath();
+    ctx.arc(-8, -131, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(-20, -131, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyebrows
+    line(-23, -137, -18, -139, "#33231c", 2);
+    line(-10, -139, -5, -137, "#33231c", 2);
+
+    // Smile / effort expression
+    ctx.beginPath();
+    ctx.arc(-13, -121, 5, 0.1, Math.PI - 0.1);
+    ctx.strokeStyle = "#743e36";
+    ctx.lineWidth = 1.7;
+    ctx.stroke();
+
+    // White kufi cap
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#b8b8b8";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(-13, -148, 17, 6, 0, Math.PI, Math.PI * 2);
+    ctx.lineTo(4, -144);
+    ctx.quadraticCurveTo(-13, -137, -30, -144);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Cap detail
+    line(-25, -145, -1, -145, "#d0d0d0", 1.5);
+
+    // Team badge
+    ctx.fillStyle = dark;
+    ctx.beginPath();
+    ctx.arc(14, -91, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawRope(time, ropeY) {
+    const pull = (currentPosition - 50) / 50;
+    const ropeShift = pull * W * 0.12;
+
+    const startX = W * 0.13;
+    const endX = W * 0.87;
+    const centerX = W * 0.5 + ropeShift;
+
+    // Rope shadow
+    ctx.beginPath();
+    ctx.moveTo(startX, ropeY + 5);
+    ctx.quadraticCurveTo(W * 0.5, ropeY + 10, endX, ropeY + 5);
+    ctx.strokeStyle = "rgba(60,40,20,.2)";
+    ctx.lineWidth = 11;
+    ctx.stroke();
+
+    // Main rope
+    ctx.beginPath();
+    ctx.moveTo(startX, ropeY);
+    ctx.quadraticCurveTo(
+      W * 0.5,
+      ropeY + Math.sin(time * 4) * 2,
+      endX,
+      ropeY
+    );
+    ctx.strokeStyle = "#a66a32";
+    ctx.lineWidth = 8;
+    ctx.lineCap = "round";
+    ctx.stroke();
+
+    // Rope twists
+    for (let i = 0; i < 34; i++) {
+      const x = startX + (endX - startX) * i / 34;
+      ctx.beginPath();
+      ctx.moveTo(x, ropeY - 4);
+      ctx.lineTo(x + 5, ropeY + 4);
+      ctx.strokeStyle = "#d7a15e";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Center knot
+    ctx.fillStyle = "#815027";
+    ctx.beginPath();
+    ctx.arc(centerX, ropeY, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Yellow flag
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(centerX, ropeY - 8);
+    ctx.lineTo(centerX, ropeY - 56);
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffd34f";
+    ctx.beginPath();
+    ctx.moveTo(centerX, ropeY - 55);
+    ctx.lineTo(centerX + 29, ropeY - 47);
+    ctx.lineTo(centerX, ropeY - 38);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function draw(time) {
+    if (!W || !H) return;
+
+    currentPosition += (targetPosition - currentPosition) * 0.055;
+
+    ctx.clearRect(0, 0, W, H);
+    drawBackground();
+
+    const scale = Math.min(W / 900, H / 430) * 1.05;
+    const groundY = H * 0.82;
+    const ropeY = H * 0.53;
+
+    // Team A boys
+    const blueX = [W * 0.22, W * 0.32, W * 0.42];
+    // Team B boys
+    const redX = [W * 0.78, W * 0.68, W * 0.58];
+
+    boys.forEach((boy) => {
+      const x = boy.team === "A"
+        ? blueX[boy.index]
+        : redX[boy.index];
+
+      drawBoy(boy, x, groundY, scale, time, ropeY);
     });
 
-    pullEffect = Math.max(0, pullEffect - delta * 2);
+    drawRope(time, ropeY);
 
-    renderer.render(scene, camera);
+    // Small instruction
+    ctx.fillStyle = "#45566a";
+    ctx.font = "bold 12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("AZHARUL HIDAYA • MATHS BATTLE", W / 2, H * 0.97);
   }
 
-  animate();
+  function animate(timestamp) {
+    const time = timestamp / 1000;
+    draw(time);
+    requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
 }
