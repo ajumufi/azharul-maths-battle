@@ -1,0 +1,138 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Host Arena | Maths Battle</title>
+
+<link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script defer src="game.js"></script>
+
+<style>
+#three-arena {
+  width: 100%;
+  height: 480px;
+  min-height: 320px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 16px;
+  background: #080f20;
+  margin: 18px 0;
+}
+#three-arena canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+@media (max-width: 600px) {
+  #three-arena { height: 350px; }
+}
+</style>
+</head>
+
+<body>
+<main class="panel">
+
+<header class="panel-head">
+<img src="assets/union-logo.png">
+<div>
+<h1>THE MATHS BATTLE · HOST ARENA</h1>
+<p>Azharul Hidaya Students Union · Exhibition Edition</p>
+</div>
+</header>
+
+<section class="card" id="setup">
+<h2>Create a live room</h2>
+<p class="status">Start a room, then let both teams join from their phones.</p>
+
+<label>
+Round duration (seconds)
+<input id="duration" class="field" type="number" min="30" max="300" value="90">
+</label>
+
+<button id="create" class="btn primary">Create Game Room</button>
+<p id="setup-msg" class="status"></p>
+</section>
+
+<section id="game" class="hidden">
+
+<div class="card">
+<div class="team-grid">
+
+<div>
+<span class="eyebrow">ROOM CODE</span>
+<div id="room-code" class="room-code">------</div>
+<p class="status">Scan QR or enter this code on each phone.</p>
+</div>
+
+<div style="display:flex;justify-content:center;align-items:center;gap:14px">
+<img id="qr" class="qr" alt="Join QR">
+<div>
+<p class="status">TEAM A</p>
+<b id="a-joined">Waiting</b>
+<p class="status">TEAM B</p>
+<b id="b-joined">Waiting</b>
+</div>
+</div>
+
+</div>
+</div>
+
+<div class="arena-board">
+
+<div class="scoreline">
+<span class="a">TEAM A <b id="score-a">0</b></span>
+<span class="b">TEAM B <b id="score-b">0</b></span>
+</div>
+
+<!-- 3D TUG OF WAR ARENA -->
+<div id="three-arena"></div>
+
+<div class="timer" id="timer">01:30</div>
+
+<p id="game-status" class="status" style="text-align:center">
+Waiting for both teams…
+</p>
+
+<div class="team-grid">
+
+<div class="team-card">
+<h2>🔵 TEAM A</h2>
+<p id="qa">Question appears when game starts.</p>
+<p class="status" id="ra">Answers: 0</p>
+</div>
+
+<div class="team-card red">
+<h2>🔴 TEAM B</h2>
+<p id="qb">Question appears when game starts.</p>
+<p class="status" id="rb">Answers: 0</p>
+</div>
+
+</div>
+
+<div class="actions">
+<button id="start" class="btn primary" disabled>Start Battle</button>
+<button id="reset" class="btn secondary">Reset Room</button>
+</div>
+
+</div>
+
+<div class="card">
+<h3>Exhibition display</h3>
+<img
+src="assets/campus-photo.jpeg"
+style="width:100%;max-height:190px;object-fit:cover;border-radius:12px"
+alt="Al Hidaya campus">
+</div>
+
+</section>
+</main>
+
+<script type="module" src="arena3d.js"></script>
+
+</body>
+</html>
